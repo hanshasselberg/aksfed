@@ -1,8 +1,8 @@
-az aks get-credentials --resource-group aks-test-hans --name dc1
+az aks get-credentials --resource-group aks-test-hans --name dc1 --overwrite-existing
 helm install consul hashicorp/consul -f dc1.yaml
 kubectl get secret consul-federation -o yaml > consul-federation-secret.yaml
 
-az aks get-credentials --resource-group aks-test-hans --name dc2
+az aks get-credentials --resource-group aks-test-hans --name dc2 --overwrite-existing
 kubectl config use-context dc2
 kubectl apply -f consul-federation-secret.yaml
 helm install consulsec hashicorp/consul -f dc2.yaml
