@@ -6,4 +6,4 @@ az hcs create --name dc1 --datacenter-name dc1 --resource-group hcs-definition-h
 token=$(az hcs create-federation-token -g hcs-definition-hans --name dc1 | jq -r '.federationToken')
 az hcs create --name dc2 --datacenter-name dc2 --resource-group hcs-definition-hans --email hans@hashicorp.com --plan-name on-demand --vnet-cidr 172.25.17.0/24 --federation-token "$token" --external-endpoint enabled > dc2.json
 
-az hcs show-federation -g hcs-definition-hans --name dc1
+echo "az hcs show-federation -g hcs-definition-hans --name dc1"
