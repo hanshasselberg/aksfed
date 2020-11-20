@@ -17,9 +17,10 @@ helm install consul hashicorp/consul -f dc1.yaml
 # az hcs create-token --name dc2 --resource-group hcs-definition-hans --output-kubernetes-secret | kubectl apply -f -
 # az hcs generate-kubernetes-secret --name dc2 --resource-group hcs-definition-hans | kubectl apply -f -
 # az hcs generate-helm-values --name dc2 -g hcs-definition-hans --aks-resource-group aks-test-hans --aks-cluster-name dc2 | sed "s/# exposeGossip/exposeGossip/" > dc2.yaml
-# helm install consulsec hashicorp/consul -f dc2.yaml
 # echo "meshGateway:
 #   enabled: true" >> dc2.yaml
+
+# helm install consulsec hashicorp/consul -f dc2.yaml
 
 # kubectl exec statefulset/consul-server -- consul members -wan
 # kubectl exec statefulset/consul-server -- consul catalog services -datacenter dc1
