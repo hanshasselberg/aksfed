@@ -48,3 +48,5 @@ kubectl apply -f client.yaml
 # kubectl exec statefulset/consul-server -- consul members -wan
 # kubectl exec statefulset/consul-server -- consul catalog services -datacenter dc1
 # kubectl exec statefulset/consul-server -- consul catalog services -datacenter dc2
+
+# consul config read -name global -http-addr (jq -r '.outputs.consul_url.value' federation-test-hans-dc1.json) -token (kubectl get secret dc1-bootstrap-token -o jsonpath={.data.token} | base64 -d) -kind proxy-defaults
