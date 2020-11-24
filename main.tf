@@ -1,7 +1,8 @@
-resource "null_resource" "hcs" {
-  provisioner "local-exec" {
-    command = "./before.sh"
-  }
+locals {
+  hcsrgname = "federation-test-hans"
+  aksrgname = "aks-test-hans-2"
+  dc1data = jsondecode(file("${path.module}/${local.hcsrgname}-dc1.json"))
+  dc2data = jsondecode(file("${path.module}/${local.hcsrgname}-dc2.json"))
 }
 
 provider "azurerm" {
@@ -10,12 +11,8 @@ provider "azurerm" {
 }
 
 resource "azurerm_resource_group" "rg" {
-  name = "aks-test-hans"
+  name = local.aksrgname
   location = "westus2"
-
-  depends_on [
-    null_resource.hcs,
-  ]
 }
 
 # Network setup
@@ -64,15 +61,10 @@ resource "azurerm_virtual_network_peering" "peer2to1" {
   allow_forwarded_traffic      = true
 }
 
-locals {
-  dc1data = jsondecode(file("${path.module}/dc1.json"))
-  dc2data = jsondecode(file("${path.module}/dc2.json"))
-}
-
 # peer to HCS
 data "azurerm_virtual_network" "hcsvnet1" {
   name                = "${local.dc1data.outputs.vnet_name.value}-vnet"
-  resource_group_name = "hcs-definition-hans-mrg-dc1"
+  resource_group_name = "${local.hcsrgname}-mrg-dc1"
 }
 resource "azurerm_virtual_network_peering" "peerhcs1to1" {
   name                      = "peerhcs1to1"
@@ -84,7 +76,7 @@ resource "azurerm_virtual_network_peering" "peerhcs1to1" {
 }
 resource "azurerm_virtual_network_peering" "peerhcs1to2" {
   name                      = "peerhcs1to2"
-  resource_group_name       = "hcs-definition-hans-mrg-dc1"
+  resource_group_name       = "${local.hcsrgname}-mrg-dc1"
   virtual_network_name      = data.azurerm_virtual_network.hcsvnet1.name
   remote_virtual_network_id = azurerm_virtual_network.vnet1.id
   allow_virtual_network_access = true
@@ -92,7 +84,7 @@ resource "azurerm_virtual_network_peering" "peerhcs1to2" {
 }
 data "azurerm_virtual_network" "hcsvnet2" {
   name                = "${local.dc2data.outputs.vnet_name.value}-vnet"
-  resource_group_name = "hcs-definition-hans-mrg-dc2"
+  resource_group_name = "${local.hcsrgname}-mrg-dc2"
 }
 resource "azurerm_virtual_network_peering" "peerhcs2to1" {
   name                      = "peerhcs2to1"
@@ -104,7 +96,7 @@ resource "azurerm_virtual_network_peering" "peerhcs2to1" {
 }
 resource "azurerm_virtual_network_peering" "peerhcs2to2" {
   name                      = "peerhcs2to2"
-  resource_group_name       = "hcs-definition-hans-mrg-dc2"
+  resource_group_name       = "${local.hcsrgname}-mrg-dc2"
   virtual_network_name      = data.azurerm_virtual_network.hcsvnet2.name
   remote_virtual_network_id = azurerm_virtual_network.vnet2.id
   allow_virtual_network_access = true

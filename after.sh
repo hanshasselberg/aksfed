@@ -1,26 +1,41 @@
 #!/usr/local/env bash
 
-az aks get-credentials --resource-group aks-test-hans --name dc1 --overwrite-existing
-kubectl config use-context dc1
+export HCSRG=federation-test-hans
+export AKSRG=aks-test-hans-2
+set -e
+set -x
 
-az hcs create-token --name dc1 --resource-group hcs-definition-hans --output-kubernetes-secret | kubectl apply -f -
-az hcs generate-kubernetes-secret --name dc1 --resource-group hcs-definition-hans | kubectl apply -f -
-az hcs generate-helm-values --name dc1 -g hcs-definition-hans --aks-resource-group aks-test-hans --aks-cluster-name dc1 | sed "s/# exposeGossip/exposeGossip/" > dc1.yaml
+az aks get-credentials -g $AKSRG --name dc1 --overwrite-existing --context $AKSRG-dc1
+kubectl config use-context $AKSRG-dc1
+
+az hcs create-token --name dc1 -g $HCSRG --output-kubernetes-secret | kubectl apply -f -
+az hcs generate-kubernetes-secret --name dc1 -g $HCSRG | kubectl apply -f -
+az hcs generate-helm-values --name dc1 -g $HCSRG --aks-resource-group $AKSRG --aks-cluster-name dc1 | sed "s/# exposeGossip/exposeGossip/" > $HCSRG-dc1.yaml
 
 echo "meshGateway:
-  enabled: true" >> dc1.yaml
+  enabled: true" >> $HCSRG-dc1.yaml
 
-helm install consul hashicorp/consul -f dc1.yaml
+helm install consul hashicorp/consul -f $HCSRG-dc1.yaml
+kubectl apply -f client.yaml
 
-# az aks get-credentials --resource-group aks-test-hans --name dc2 --overwrite-existing
-# kubectl config use-context dc2
-# az hcs create-token --name dc2 --resource-group hcs-definition-hans --output-kubernetes-secret | kubectl apply -f -
-# az hcs generate-kubernetes-secret --name dc2 --resource-group hcs-definition-hans | kubectl apply -f -
-# az hcs generate-helm-values --name dc2 -g hcs-definition-hans --aks-resource-group aks-test-hans --aks-cluster-name dc2 | sed "s/# exposeGossip/exposeGossip/" > dc2.yaml
-# echo "meshGateway:
-#   enabled: true" >> dc2.yaml
+echo "change client-token to all dcs"
 
-# helm install consulsec hashicorp/consul -f dc2.yaml
+az aks get-credentials -g $AKSRG --name dc2 --overwrite-existing --context $AKSRG-dc2
+kubectl config use-context $AKSRG-dc2
+az hcs create-token --name dc2 -g $HCSRG --output-kubernetes-secret | kubectl apply -f -
+az hcs generate-kubernetes-secret --name dc2 -g $HCSRG | kubectl apply -f -
+az hcs generate-helm-values --name dc2 -g $HCSRG --aks-resource-group $AKSRG --aks-cluster-name dc2 | sed "s/# exposeGossip/exposeGossip/" > $HCSRG-dc2.yaml
+echo "meshGateway:
+  enabled: true" >> $HCSRG-dc2.yaml
+
+helm install consulsec hashicorp/consul -f $HCSRG-dc2.yaml
+
+token=$(kubectl get secret dc2-bootstrap-token -o jsonpath={.data.token} | base64 -d)
+url=$(jq -r '.outputs.consul_url.value' federation-test-hans-dc1.json)
+curl -H "X-CONSUL-TOKEN: $token" --upload-file mesh.json $url/v1/config
+
+kubectl apply -f server.yaml
+kubectl apply -f client.yaml
 
 # kubectl exec statefulset/consul-server -- consul members -wan
 # kubectl exec statefulset/consul-server -- consul catalog services -datacenter dc1
