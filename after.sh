@@ -33,9 +33,12 @@ helm install consulsec hashicorp/consul -f $HCSRG-dc2.yaml
 token=$(kubectl get secret dc2-bootstrap-token -o jsonpath={.data.token} | base64 -d)
 url=$(jq -r '.outputs.consul_url.value' federation-test-hans-dc1.json)
 curl -H "X-CONSUL-TOKEN: $token" --upload-file mesh.json $url/v1/config
+curl -H "X-CONSUL-TOKEN: $token" -d @allow.json $url/v1/connect/intentions
 
 kubectl apply -f server.yaml
 kubectl apply -f client.yaml
+
+############### APPENDIX ###################
 
 # kubectl exec statefulset/consul-server -- consul members -wan
 # kubectl exec statefulset/consul-server -- consul catalog services -datacenter dc1

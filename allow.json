@@ -1,0 +1,6 @@
+{
+  "SourceName": "static-client",
+  "DestinationName": "static-server",
+  "SourceType": "consul",
+  "Action": "allow"
+}
