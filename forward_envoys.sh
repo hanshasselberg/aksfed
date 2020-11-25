@@ -12,7 +12,7 @@ killall() {
     echo DONE
 }
 
-AKSRG=aks-test-hans-2
+source env.sh
 port=19000
 
 function forward {
@@ -29,12 +29,15 @@ function forward_mesh {
 	done
 }
 
-kubectl config use-context $AKSRG-dc2
-forward "static-server"
+kubectl config use-context $RG-dc1
+forward_mesh
 forward "static-client"
+
+kubectl config use-context $RG-dc2
+forward "static-server"
 forward_mesh
 
-kubectl config use-context $AKSRG-dc1
+kubectl config use-context $RG-dc3
 forward_mesh
 forward "static-client"
 

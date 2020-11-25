@@ -1,4 +1,5 @@
 {
   "Name": "client-token",
-  "Datacenters": []
+  "Datacenters": [],
+  "Rules": "node_prefix \"\" { policy = \"write\" }\nservice_prefix \"\" { policy = \"read\" }"
 }
