@@ -1,8 +1,8 @@
+variable "rg" {}
+
 locals {
-  hcsrgname = "federation-test-hans"
-  aksrgname = "aks-test-hans-2"
-  dc1data = jsondecode(file("${path.module}/${local.hcsrgname}-dc1.json"))
-  dc2data = jsondecode(file("${path.module}/${local.hcsrgname}-dc2.json"))
+  dc1data = jsondecode(file("${path.module}/${var.rg}-hcs-dc1.json"))
+  dc2data = jsondecode(file("${path.module}/${var.rg}-hcs-dc2.json"))
 }
 
 provider "azurerm" {
@@ -11,7 +11,7 @@ provider "azurerm" {
 }
 
 resource "azurerm_resource_group" "rg" {
-  name = local.aksrgname
+  name = var.rg
   location = "westus2"
 }
 
@@ -64,7 +64,7 @@ resource "azurerm_virtual_network_peering" "peer2to1" {
 # peer to HCS
 data "azurerm_virtual_network" "hcsvnet1" {
   name                = "${local.dc1data.outputs.vnet_name.value}-vnet"
-  resource_group_name = "${local.hcsrgname}-mrg-dc1"
+  resource_group_name = "${var.rg}-mrg-dc1"
 }
 resource "azurerm_virtual_network_peering" "peerhcs1to1" {
   name                      = "peerhcs1to1"
@@ -76,7 +76,7 @@ resource "azurerm_virtual_network_peering" "peerhcs1to1" {
 }
 resource "azurerm_virtual_network_peering" "peerhcs1to2" {
   name                      = "peerhcs1to2"
-  resource_group_name       = "${local.hcsrgname}-mrg-dc1"
+  resource_group_name       = "${var.rg}-mrg-dc1"
   virtual_network_name      = data.azurerm_virtual_network.hcsvnet1.name
   remote_virtual_network_id = azurerm_virtual_network.vnet1.id
   allow_virtual_network_access = true
@@ -84,7 +84,7 @@ resource "azurerm_virtual_network_peering" "peerhcs1to2" {
 }
 data "azurerm_virtual_network" "hcsvnet2" {
   name                = "${local.dc2data.outputs.vnet_name.value}-vnet"
-  resource_group_name = "${local.hcsrgname}-mrg-dc2"
+  resource_group_name = "${var.rg}-mrg-dc2"
 }
 resource "azurerm_virtual_network_peering" "peerhcs2to1" {
   name                      = "peerhcs2to1"
@@ -96,7 +96,7 @@ resource "azurerm_virtual_network_peering" "peerhcs2to1" {
 }
 resource "azurerm_virtual_network_peering" "peerhcs2to2" {
   name                      = "peerhcs2to2"
-  resource_group_name       = "${local.hcsrgname}-mrg-dc2"
+  resource_group_name       = "${var.rg}-mrg-dc2"
   virtual_network_name      = data.azurerm_virtual_network.hcsvnet2.name
   remote_virtual_network_id = azurerm_virtual_network.vnet2.id
   allow_virtual_network_access = true
@@ -169,47 +169,3 @@ resource "azurerm_kubernetes_cluster" "dc2" {
     docker_bridge_cidr = "172.171.0.1/16"
   }
 }
-
-# provider "helm" {
-#   alias = "dc1"
-#   kubernetes {
-#     host = azurerm_kubernetes_cluster.dc1.kube_config[0].host
-
-#     client_key             = base64decode(azurerm_kubernetes_cluster.dc1.kube_config[0].client_key)
-#     client_certificate     = base64decode(azurerm_kubernetes_cluster.dc1.kube_config[0].client_certificate)
-#     cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.dc1.kube_config[0].cluster_ca_certificate)
-#     load_config_file       = false
-#   }
-# }
-
-# provider "helm" {
-#   alias = "dc2"
-#   kubernetes {
-#     host = azurerm_kubernetes_cluster.dc2.kube_config[0].host
-
-#     client_key             = base64decode(azurerm_kubernetes_cluster.dc2.kube_config[0].client_key)
-#     client_certificate     = base64decode(azurerm_kubernetes_cluster.dc2.kube_config[0].client_certificate)
-#     cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.dc2.kube_config[0].cluster_ca_certificate)
-#     load_config_file       = false
-#   }
-# }
-
-# resource "helm_release" "primary" {
-#   provider = helm.dc1
-#   name  = "primary"
-#   chart = "hashicorp/consul"
-#   repository = "https://helm.releases.hashicorp.com"
-
-#   values = [
-#     "${file("dc1.yaml")}"
-#   ]
-
-#   set {
-#     name = "meshGateway.enabled"
-#     value = "true"
-#   }
-
-#   depends_on = [
-#     helm_release.aws_vpc_cni
-#   ]
-# }
