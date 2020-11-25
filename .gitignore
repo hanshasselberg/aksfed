@@ -1,4 +1,2 @@
 terraform.tfstate*
 .terraform*
-dc1.json
-dc2.json

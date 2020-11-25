@@ -6,6 +6,7 @@ You want to run it like that:
 
 ```
 $ bash hcs.sh
-$ source env.sh && terraform apply
+$ bash terraform.sh
 $ bash consul.sh
+$ bash services.sh
 ```
