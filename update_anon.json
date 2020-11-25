@@ -1,4 +1,5 @@
 {
+  "Name": "Anonymous Token",
   "Policies": [
     {
       "Name": "client-token"

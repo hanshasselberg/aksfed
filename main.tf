@@ -1,4 +1,4 @@
-variable "rg" {}
+variable rg {}
 
 locals {
   dc1data = jsondecode(file("${path.module}/${var.rg}-hcs-dc1.json"))
@@ -10,35 +10,30 @@ provider "azurerm" {
   features {}
 }
 
-resource "azurerm_resource_group" "rg" {
-  name = var.rg
-  location = "westus2"
-}
-
 # Network setup
 # vnet1 and vnet2 with subnets, peered together
 resource "azurerm_virtual_network" "vnet1" {
   name                = "vnet1"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = "westus2"
+  resource_group_name = var.rg
   address_space       = ["10.0.0.0/8"]
 }
 resource "azurerm_subnet" "subnet1" {
   name                 = "subnet"
-  resource_group_name  = azurerm_resource_group.rg.name
+  resource_group_name  = var.rg
   virtual_network_name = azurerm_virtual_network.vnet1.name
   address_prefixes     = ["10.0.0.0/16"]
 }
 
 resource "azurerm_virtual_network" "vnet2" {
   name                = "vnet2"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = "westus2"
+  resource_group_name = var.rg
   address_space       = ["11.0.0.0/8"]
 }
 resource "azurerm_subnet" "subnet2" {
   name                 = "subnet"
-  resource_group_name  = azurerm_resource_group.rg.name
+  resource_group_name  = var.rg
   virtual_network_name = azurerm_virtual_network.vnet2.name
   address_prefixes     = ["11.0.0.0/16"]
 }
@@ -46,7 +41,7 @@ resource "azurerm_subnet" "subnet2" {
 # peer AKS vnets
 resource "azurerm_virtual_network_peering" "peer1to2" {
   name                      = "peer1to2"
-  resource_group_name       = azurerm_resource_group.rg.name
+  resource_group_name       = var.rg
   virtual_network_name      = azurerm_virtual_network.vnet1.name
   remote_virtual_network_id = azurerm_virtual_network.vnet2.id
   allow_virtual_network_access = true
@@ -54,7 +49,7 @@ resource "azurerm_virtual_network_peering" "peer1to2" {
 }
 resource "azurerm_virtual_network_peering" "peer2to1" {
   name                      = "peer2to1"
-  resource_group_name       = azurerm_resource_group.rg.name
+  resource_group_name       = var.rg
   virtual_network_name      = azurerm_virtual_network.vnet2.name
   remote_virtual_network_id = azurerm_virtual_network.vnet1.id
   allow_virtual_network_access = true
@@ -68,7 +63,7 @@ data "azurerm_virtual_network" "hcsvnet1" {
 }
 resource "azurerm_virtual_network_peering" "peerhcs1to1" {
   name                      = "peerhcs1to1"
-  resource_group_name       = azurerm_resource_group.rg.name
+  resource_group_name       = var.rg
   virtual_network_name      = azurerm_virtual_network.vnet1.name
   remote_virtual_network_id = data.azurerm_virtual_network.hcsvnet1.id
   allow_virtual_network_access = true
@@ -88,7 +83,7 @@ data "azurerm_virtual_network" "hcsvnet2" {
 }
 resource "azurerm_virtual_network_peering" "peerhcs2to1" {
   name                      = "peerhcs2to1"
-  resource_group_name       = azurerm_resource_group.rg.name
+  resource_group_name       = var.rg
   virtual_network_name      = azurerm_virtual_network.vnet2.name
   remote_virtual_network_id = data.azurerm_virtual_network.hcsvnet2.id
   allow_virtual_network_access = true
@@ -109,8 +104,8 @@ resource "azurerm_kubernetes_cluster" "dc1" {
     type = "SystemAssigned"
   }
   name                = "dc1"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = "westus2"
+  resource_group_name = var.rg
   dns_prefix          = "dc1-dns"
 
   linux_profile {
@@ -142,8 +137,8 @@ resource "azurerm_kubernetes_cluster" "dc2" {
     type = "SystemAssigned"
   }
   name                = "dc2"
-  location            = azurerm_resource_group.rg.location
-  resource_group_name = azurerm_resource_group.rg.name
+  location            = "westus2"
+  resource_group_name = var.rg
   dns_prefix          = "dc2-dns"
 
   linux_profile {
