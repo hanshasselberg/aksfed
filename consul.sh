@@ -19,6 +19,10 @@ url=$(jq -r '.outputs.consul_url.value' $RG-hcs-dc1.json)
 curl -s -H "X-CONSUL-TOKEN: $token" --upload-file mesh_config.json $url/v1/config
 curl -s -H "X-CONSUL-TOKEN: $token" -d @allow_intention.json $url/v1/connect/intentions
 curl -s -H "X-CONSUL-TOKEN: $token" --upload-file update_anon.json $url/v1/acl/token/00000000-0000-0000-0000-000000000002
+
+echo "#########################"
+echo "FIX client-token policy!!"
+echo "#########################"
 # policy_id=$(curl -s -H "X-CONSUL-TOKEN: $token" $url/v1/acl/policy/name/client-token | jq -r '.ID')
 # curl -s -H "X-CONSUL-TOKEN: $token" --upload-file update_client_token.json $url/v1/acl/policy/$policy_id
 
