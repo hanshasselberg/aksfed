@@ -5,7 +5,8 @@ This repo sets up two AKS clusters in distinct vnets, peers them and install [co
 You want to run it like that:
 
 ```
-$ terraform.sh
+$ terraform init
+$ terraform apply
 $ bash consul.sh
 $ bash services.sh
 ```
